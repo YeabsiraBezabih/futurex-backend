@@ -28,7 +28,7 @@ const updateSetting = (req, res) => {
         return res.status(400).json({ error: "Missing required settings data" });
     }
 
-    const sql = 'UPDATE user_settings SET language = ?, theme = ?, notifications = ? WHERE user_id = ?';
+    const sql = 'UPDATE settings SET language = ?, theme = ?, notifications = ? WHERE user_id = ?';
     const values = [language, theme, notifications, userId];
 
     db.query(sql, values, (err, result) => {

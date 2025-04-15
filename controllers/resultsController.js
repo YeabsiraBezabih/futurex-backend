@@ -65,7 +65,7 @@ const updateResult = (req, res) => {
               console.error('Error updating result:', err);
               return res.status(500).json({ error: 'Failed to update result' });
           }
-          res.status(200).json({ id: parseInt(id), userId, quizId, score });
+          res.status(200).json({ id: parseInt(id), user_id: userId, quiz_id: quizId, score });
       });
   });
 };

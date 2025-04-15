@@ -20,7 +20,7 @@ const getLanguageById = (req, res) => {
       console.error("Error retrieving language:", err);
       return res.status(500).json({ error: "Failed to retrieve language" });
     }
-
+    
     if (result.length === 0) {
       return res.status(404).json({ message: "Language not found" });
     }
@@ -35,7 +35,7 @@ const createLanguage = (req, res) => {
   if (!name || !code) {
     return res.status(400).json({ error: "Name and code are required" });
   }
-
+  
   const sql = 'INSERT INTO languages (name, code) VALUES (?, ?)';
 
   db.query(sql, [name, code], (err, result) => {
@@ -43,7 +43,7 @@ const createLanguage = (req, res) => {
       console.error("Error creating language:", err);
       return res.status(500).json({ error: "Failed to create language" });
     }
-
+    
     const newLanguageId = result.insertId;
     res.status(201).json({ id: newLanguageId, message: "Language created successfully" });
   });
@@ -56,7 +56,7 @@ const updateLanguage = (req, res) => {
   if (!name || !code) {
     return res.status(400).json({ error: "Name and code are required" });
   }
-
+  
   const checkSql = 'SELECT * FROM languages WHERE id = ?';
   db.query(checkSql, [id], (err, result) => {
     if (err) {
@@ -65,12 +65,12 @@ const updateLanguage = (req, res) => {
     }
     if (result.length === 0) {
       return res.status(404).json({ message: "Language not found" });
-    }
-
-    const updateSql = 'UPDATE languages SET name = ?, code = ? WHERE id = ?';
-    db.query(updateSql, [name, code, id], (err, result) => {
-      if (err) {
-        console.error("Error updating language:", err);
+      }
+      
+      const updateSql = 'UPDATE languages SET name = ?, code = ? WHERE id = ?';
+      db.query(updateSql, [name, code, id], (err, result) => {
+        if (err) {
+          console.error("Error updating language:", err);
         return res.status(500).json({ error: "Failed to update language" });
       }
 
@@ -81,7 +81,7 @@ const updateLanguage = (req, res) => {
 
 const deleteLanguage = (req, res) => {
   const { id } = req.params;
-
+  
   const checkSql = 'SELECT * FROM languages WHERE id = ?';
   db.query(checkSql, [id], (err, result) => {
     if (err) {
@@ -90,17 +90,17 @@ const deleteLanguage = (req, res) => {
     }
 
     if (result.length === 0) {
-      return res.status(404).json({ message: "Language not found" });
-    }
-
-    const deleteSql = 'DELETE FROM languages WHERE id = ?';
-    db.query(deleteSql, [id], (err, result) => {
-      if (err) {
-        console.error("Error deleting language:", err);
-        return res.status(500).json({ error: "Failed to delete language" });
+        return res.status(404).json({ message: "Language not found" });
       }
-
-      res.json({ message: "Language deleted successfully" });
+      
+      const deleteSql = 'DELETE FROM languages WHERE id = ?';
+      db.query(deleteSql, [id], (err, result) => {
+        if (err) {
+          console.error("Error deleting language:", err);
+          return res.status(500).json({ error: "Failed to delete language" });
+        }
+        
+        res.json({ message: "Language deleted successfully" });
     });
   });
 };

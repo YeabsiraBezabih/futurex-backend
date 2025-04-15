@@ -72,7 +72,7 @@ const deleteNotification = (req, res) => {
         if (err) {
             console.error("Error deleting notification:", err);
             return res.status(500).json({ message: 'Failed to delete notification', error: err.message });
-        }
+        } 
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Notification not found' });

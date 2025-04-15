@@ -103,9 +103,9 @@ const deleteQuiz = (req, res) => {
     });
 };
 
-  module.exports = {
-    addQuiz,
-    getAllQuizzes,
-    getQuizById,
-    deleteQuiz,
-  };
+module.exports = {
+  addQuiz,
+  getAllQuizzes,
+  getQuizById,
+  deleteQuiz,
+};

@@ -54,21 +54,20 @@ const deleteMessage = (req, res) => {
 };
 
 const getMessagesBetweenUsers = (req, res) => {
-    const { userId1, userId2 } = req.params;
-    const sql = `
-      SELECT * FROM messages
-      WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
-      ORDER BY timestamp ASC
-    `;
-    db.query(sql, [userId1, userId2, userId2, userId1], (err, results) => {
-      if (err) {
-        console.error("Error fetching messages between users:", err);
-        return res.status(500).json({ error: 'Failed to fetch messages between users' });
-      }
-      res.status(200).json(results);
-    });
-  };
-  
+  const { userId1, userId2 } = req.params;
+  const sql = `
+    SELECT * FROM messages
+    WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+    ORDER BY timestamp ASC
+  `;
+  db.query(sql, [userId1, userId2, userId2, userId1], (err, results) => {
+    if (err) {
+      console.error("Error fetching messages between users:", err);
+      return res.status(500).json({ error: 'Failed to fetch messages between users' });
+    }
+    res.status(200).json(results);
+  });
+};
 
 module.exports = {
   addMessage,
