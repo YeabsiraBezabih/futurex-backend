@@ -38,50 +38,39 @@ const authMiddleware = require('../middlewares/authMiddleware');
  * @swagger
  * /api/quiz:
  *   get:
- *     summary: Get all quiz questions
+ *     summary: Get all quizzes
  *     tags: [Quiz]
  *     responses:
  *       200:
- *         description: List of quiz questions
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/QuizQuestion'
+ *         description: List of all quizzes
  */
-router.get('/', quizController.getAllQuestions);
+router.get('/', quizController.getAllQuizzes);
 
 /**
  * @swagger
  * /api/quiz/{id}:
  *   get:
- *     summary: Get a quiz question by ID
+ *     summary: Get a quiz by ID
  *     tags: [Quiz]
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: integer
- *         required: true
- *         description: ID of the quiz question
  *     responses:
  *       200:
- *         description: Quiz question found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/QuizQuestion'
+ *         description: Quiz details
  *       404:
- *         description: Quiz question not found
+ *         description: Quiz not found
  */
-router.get('/:id', quizController.getQuestion);
+router.get('/:id', quizController.getQuizById);
 
 /**
  * @swagger
  * /api/quiz:
  *   post:
- *     summary: Create a new quiz question
+ *     summary: Create a new quiz
  *     tags: [Quiz]
  *     security:
  *       - bearerAuth: []
@@ -90,71 +79,56 @@ router.get('/:id', quizController.getQuestion);
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/QuizQuestion'
+ *             type: object
+ *             required:
+ *               - title
+ *               - description
+ *               - language_id
+ *               - difficulty_level
+ *               - questions
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               language_id:
+ *                 type: integer
+ *               difficulty_level:
+ *                 type: string
+ *               questions:
+ *                 type: array
+ *                 items:
+ *                   type: object
  *     responses:
  *       201:
- *         description: Quiz question created
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/QuizQuestion'
+ *         description: Quiz created successfully
+ *       401:
+ *         description: Unauthorized
  */
-router.post('/', authMiddleware, quizController.createQuestion);
-
-/**
- * @swagger
- * /api/quiz/{id}:
- *   put:
- *     summary: Update a quiz question
- *     tags: [Quiz]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: ID of the quiz question to update
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/QuizQuestion'
- *     responses:
- *       200:
- *         description: Quiz question updated
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/QuizQuestion'
- *       404:
- *         description: Quiz question not found
- */
-router.put('/:id', authMiddleware, quizController.updateQuestion);
+router.post('/', authMiddleware, quizController.createQuiz);
 
 /**
  * @swagger
  * /api/quiz/{id}:
  *   delete:
- *     summary: Delete a quiz question
+ *     summary: Delete a quiz
  *     tags: [Quiz]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: integer
- *         required: true
- *         description: ID of the quiz question to delete
  *     responses:
- *       204:
- *         description: Quiz question deleted
+ *       200:
+ *         description: Quiz deleted successfully
+ *       401:
+ *         description: Unauthorized
  *       404:
- *         description: Quiz question not found
+ *         description: Quiz not found
  */
-router.delete('/:id', authMiddleware, quizController.deleteQuestion);
+router.delete('/:id', authMiddleware, quizController.deleteQuiz);
 
 module.exports = router;

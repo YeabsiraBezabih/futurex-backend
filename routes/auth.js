@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const authMiddleware = require('../middlewares/authMiddleware')
+const authMiddleware = require('../middlewares/authMiddleware');
 /**
  * @swagger
  * tags:
@@ -10,7 +10,7 @@ const authMiddleware = require('../middlewares/authMiddleware')
  */
 /**
  * @swagger
- * /auth/register:
+ * /api/auth/register:
  *   post:
  *     summary: Register a new user
  *     tags: [Authentication]
@@ -40,7 +40,7 @@ const authMiddleware = require('../middlewares/authMiddleware')
 router.post('/register', authController.register);
 /**
  * @swagger
- * /auth/login:
+ * /api/auth/login:
  *   post:
  *     summary: Login an existing user
  *     tags: [Authentication]
@@ -51,12 +51,12 @@ router.post('/register', authController.register);
  *           schema:
  *             type: object
  *             properties:
- *               email:
+ *               username:
  *                 type: string
  *               password:
  *                 type: string
  *             required:
- *               - email
+ *               - username
  *               - password
  *     responses:
  *       200:
@@ -67,7 +67,7 @@ router.post('/register', authController.register);
 router.post('/login', authController.login);
 /**
  * @swagger
- * /auth/profile:
+ * /api/auth/profile:
  *   get:
  *     summary: Get user profile
  *     tags: [Authentication]
@@ -79,10 +79,10 @@ router.post('/login', authController.login);
  *       401:
  *         description: Unauthorized
  */
-router.get('/profile',authMiddleware, authController.profile);
+router.get('/profile', authMiddleware, authController.profile);
 /**
  * @swagger
- * /auth/profile:
+ * /api/auth/profile:
  *   put:
  *     summary: Update user profile
  *     tags: [Authentication]
@@ -94,6 +94,14 @@ router.get('/profile',authMiddleware, authController.profile);
  *         application/json:
  *           schema:
  *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *             required:
+ *               - username
+ *               - email
  *     responses:
  *       200:
  *         description: User profile updated successfully
@@ -102,5 +110,5 @@ router.get('/profile',authMiddleware, authController.profile);
  *       401:
  *         description: Unauthorized
  */
-router.put('/profile',authMiddleware, authController.updateProfile);
+router.put('/profile', authMiddleware, authController.updateProfile);
 module.exports = router;

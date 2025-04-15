@@ -9,10 +9,11 @@ const quizRoutes = require('./routes/quiz');
 const resultsRoutes = require('./routes/results');
 const settingsRoutes = require('./routes/settings');
 const studyplansRoutes = require('./routes/studyplans');
+const hobbiesRoutes = require('./routes/hobbies');
 const swaggerJSDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+const db = require('./database/db');
 const app = express();
-
-
 
 const options = {
     definition: {
@@ -40,16 +41,22 @@ const options = {
 
 const swaggerSpec = swaggerJSDoc(options);
 
+// Serve Swagger documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-
+// Middleware
 app.use(cors());
 app.use(express.json());
 
+// Make database pool available in request object
+app.use((req, res, next) => {
+  req.pool = db;
+  next();
+});
 
 app.get('/', (req, res) => {
   res.send('backend is running');
 });
-
 
 /**
  * @swagger
@@ -66,7 +73,6 @@ app.get('/', (req, res) => {
  *               type: string
  *               example: backend is running
  */
-
 
 /**
  * @swagger
@@ -106,4 +112,37 @@ app.use('/api/quiz', quizRoutes);
 app.use('/api/results', resultsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/studyplans', studyplansRoutes);
+app.use('/api/hobbies', hobbiesRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+
+// Start server
+const server = app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err) => {
+  console.log('Unhandled Promise Rejection:', err);
+  // Close server & exit process
+  server.close(() => process.exit(1));
+});
 

@@ -1,92 +1,95 @@
 const db = require('../database/db');
 
-const getAllHobbies = (req, res) => {
-    const sql = "SELECT * FROM Hobbies";
-    db.query(sql, (err, result) => {
-        if (err) {
-            console.error("Error fetching hobbies:", err);
-            return res.status(500).json({ error: "Failed to fetch hobbies" });
-        }
-        res.json(result);
-    });
-};
-
-const getHobby = (req, res) => {
-    const hobbieId = req.params.id;
-    const sql = "SELECT * FROM Hobbies WHERE id = ?";
-    db.query(sql, [hobbieId], (err, result) => {
-        if (err) {
-            console.error("Error fetching hobbie:", err);
-            return res.status(500).json({ error: "Failed to fetch hobbie" });
-        }
-        if (result.length === 0) {
-            return res.status(404).json({ error: "Hobbie not found" });
-        }
-        res.json(result[0]);
-    });
-};
-
-
-const createHobby = (req, res) => {
-    const { name, description, image_url } = req.body;
-    const category = "general"; 
-
-    if (!name || !description  || !image_url) {
-        return res.status(400).json({ error: "All fields are required" });
+const getAllHobbies = async (req, res) => {
+    try {
+        const query = 'SELECT * FROM Hobbies ORDER BY name';
+        const result = await db.query(query);
+        res.status(200).json(result.rows);
+    } catch (err) {
+        console.error('Error fetching hobbies:', err);
+        res.status(500).json({ message: 'Error fetching hobbies', error: err });
     }
-
-    const sql = "INSERT INTO Hobbies (name, description, category, image_url) VALUES (?, ?, ?, ?)";
-    db.query(sql, [name, description, category, image_url], (err, result) => {
-        if (err) {
-            console.error("Error creating hobbie:", err);
-            return res.status(500).json({ error: "Failed to create hobbie" });
-        }
-        res.status(201).json({ id: result.insertId, message: "Hobbie created successfully" });
-    });
 };
 
-
-const updateHobby = (req, res) => {
-    const hobbieId = req.params.id;
-    const { name, description, image_url } = req.body;
-    const category = "general"
-
-    if (!name || !description  || !image_url) {
-        return res.status(400).json({ error: "All fields are required" });
+const getHobbyById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const query = 'SELECT * FROM Hobbies WHERE id = $1';
+        const result = await db.query(query, [id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Hobby not found' });
+        }
+        
+        res.status(200).json(result.rows[0]);
+    } catch (err) {
+        console.error('Error fetching hobby:', err);
+        res.status(500).json({ message: 'Error fetching hobby', error: err });
     }
-
-    const sql = "UPDATE Hobbies SET name = ?, description = ?, category = ?, image_url = ? WHERE id = ?";
-    db.query(sql, [name, description, category, image_url, hobbieId], (err, result) => {
-        if (err) {
-            console.error("Error updating hobbie:", err);
-            return res.status(500).json({ error: "Failed to update hobbie" });
-        }
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Hobbie not found" });
-        }
-        res.json({ message: "Hobbie updated successfully" });
-    });
 };
 
-const deleteHobby = (req, res) => {
-    const hobbieId = req.params.id;
-    const sql = "DELETE FROM Hobbies WHERE id = ?";
-    db.query(sql, [hobbieId], (err, result) => {
-        if (err) {
-            console.error("Error deleting hobbie:", err);
-            return res.status(500).json({ error: "Failed to delete hobbie" });
+const createHobby = async (req, res) => {
+    try {
+        const { name, description } = req.body;
+        
+        if (!name) {
+            return res.status(400).json({ message: 'Name is required' });
         }
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Hobbie not found" });
+
+        const query = 'INSERT INTO Hobbies (name, description) VALUES ($1, $2) RETURNING *';
+        const result = await db.query(query, [name, description]);
+        
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error('Error creating hobby:', err);
+        res.status(500).json({ message: 'Error creating hobby', error: err });
+    }
+};
+
+const updateHobby = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description } = req.body;
+        
+        if (!name) {
+            return res.status(400).json({ message: 'Name is required' });
         }
-        res.json({ message: "Hobbie deleted successfully" });
-    });
+
+        const query = 'UPDATE Hobbies SET name = $1, description = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING *';
+        const result = await db.query(query, [name, description, id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Hobby not found' });
+        }
+        
+        res.status(200).json(result.rows[0]);
+    } catch (err) {
+        console.error('Error updating hobby:', err);
+        res.status(500).json({ message: 'Error updating hobby', error: err });
+    }
+};
+
+const deleteHobby = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const query = 'DELETE FROM Hobbies WHERE id = $1 RETURNING *';
+        const result = await db.query(query, [id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Hobby not found' });
+        }
+        
+        res.status(200).json({ message: 'Hobby deleted successfully' });
+    } catch (err) {
+        console.error('Error deleting hobby:', err);
+        res.status(500).json({ message: 'Error deleting hobby', error: err });
+    }
 };
 
 module.exports = {
     getAllHobbies,
-    getHobby,
+    getHobbyById,
     createHobby,
     updateHobby,
-    deleteHobby,
+    deleteHobby
 };

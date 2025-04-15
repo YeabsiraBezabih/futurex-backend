@@ -1,96 +1,105 @@
 const db = require('../database/db');
 
-const addQuiz = (req, res) => {
-    const { title, description, questions } = req.body;
-    if (!title || !description || !questions || !Array.isArray(questions) || questions.length === 0) {
-        return res.status(400).json({ error: 'Title, description, and questions are required and questions must be a non-empty array' });
-    }
-
-    const quizData = { title, description };
-
-    db.query('INSERT INTO quizzes SET ?', quizData, (err, result) => {
-        if (err) {
-            console.error('Error adding quiz:', err);
-            return res.status(500).json({ error: 'Failed to add quiz' });
-        }
-
-        const quizId = result.insertId;
-
-        const questionValues = questions.map(question => [
-            quizId,
-            question.questionText,
-            JSON.stringify(question.options),
-            question.correctAnswer
-        ]);
-
-        const questionQuery = 'INSERT INTO questions (quiz_id, question_text, options, correct_answer) VALUES ?';
-
-        db.query(questionQuery, [questionValues], (err, result) => {
-            if (err) {
-                console.error('Error adding questions:', err);
-                // Consider deleting the quiz if adding questions fails
-                db.query('DELETE FROM quizzes WHERE id = ?', quizId);
-                return res.status(500).json({ error: 'Failed to add questions' });
-            }
-            res.status(201).json({ message: 'Quiz added successfully', quizId: quizId });
-        });
-    });
-};
-
 const getAllQuizzes = (req, res) => {
-    db.query('SELECT * FROM quizzes', (err, results) => {
-        if (err) {
-            console.error('Error getting all quizzes:', err);
-            return res.status(500).json({ error: 'Failed to retrieve quizzes' });
-        }
-        res.status(200).json(results);
+  const sql = 'SELECT * FROM Quiz';
+  
+  db.query(sql)
+    .then(([results]) => {
+      res.status(200).json(results);
+    })
+    .catch(err => {
+      console.error('Error getting all quizzes:', err);
+      res.status(500).json({ error: 'Failed to retrieve quizzes' });
     });
 };
 
 const getQuizById = (req, res) => {
-    const quizId = req.params.id;
+  const quizId = req.params.id;
 
-    const quizQuery = 'SELECT * FROM quizzes WHERE id = ?';
-    const questionsQuery = 'SELECT * FROM questions WHERE quiz_id = ?';
+  const quizQuery = 'SELECT * FROM Quiz WHERE id = ?';
+  const questionsQuery = 'SELECT * FROM QuizQuestions WHERE quiz_id = ?';
 
-    db.query(quizQuery, [quizId], (err, quizResult) => {
-        if (err) {
-            console.error('Error getting quiz:', err);
-            return res.status(500).json({ error: 'Failed to retrieve quiz' });
-        }
+  db.query(quizQuery, [quizId])
+    .then(([quizResults]) => {
+      if (quizResults.length === 0) {
+        return res.status(404).json({ error: 'Quiz not found' });
+      }
 
-        if (quizResult.length === 0) {
-            return res.status(404).json({ error: 'Quiz not found' });
-        }
-
-        db.query(questionsQuery, [quizId], (err, questionsResult) => {
-            if (err) {
-                console.error('Error getting questions:', err);
-                return res.status(500).json({ error: 'Failed to retrieve questions' });
-            }
-
-            const quiz = quizResult[0];
-            quiz.questions = questionsResult.map(question => ({
-                id: question.id,
-                questionText: question.question_text,
-                options: JSON.parse(question.options),
-                correctAnswer: question.correct_answer
-            }));
-
-            res.status(200).json(quiz);
+      return db.query(questionsQuery, [quizId])
+        .then(([questionsResults]) => {
+          const quiz = quizResults[0];
+          quiz.questions = questionsResults.map(question => ({
+            id: question.id,
+            question: question.question,
+            options: JSON.parse(question.options),
+            correct_answer: question.correct_answer
+          }));
+          res.status(200).json(quiz);
         });
+    })
+    .catch(err => {
+      console.error('Error getting quiz:', err);
+      res.status(500).json({ error: 'Failed to retrieve quiz' });
     });
 };
 
+const createQuiz = (req, res) => {
+  const { title, description, language_id, difficulty_level, questions } = req.body;
 
+  if (!title || !description || !language_id || !difficulty_level || !questions || !Array.isArray(questions) || questions.length === 0) {
+    return res.status(400).json({
+      error: 'Title, description, language_id, difficulty_level, and questions are required. Questions must be a non-empty array.'
+    });
+  }
 
+  const quizSql = 'INSERT INTO Quiz (title, description, language_id, difficulty_level) VALUES (?, ?, ?, ?)';
+  
+  db.query(quizSql, [title, description, language_id, difficulty_level])
+    .then(([result]) => {
+      const quizId = result.insertId;
+      const questionValues = questions.map(q => [
+        quizId,
+        q.question,
+        q.correct_answer,
+        JSON.stringify(q.options)
+      ]);
 
+      const questionsSql = 'INSERT INTO QuizQuestions (quiz_id, question, correct_answer, options) VALUES ?';
+      return db.query(questionsSql, [questionValues])
+        .then(() => {
+          res.status(201).json({
+            message: 'Quiz created successfully',
+            quizId: quizId
+          });
+        });
+    })
+    .catch(err => {
+      console.error('Error creating quiz:', err);
+      res.status(500).json({ error: 'Failed to create quiz' });
+    });
+};
 
+const deleteQuiz = (req, res) => {
+  const quizId = req.params.id;
 
+  const sql = 'DELETE FROM Quiz WHERE id = ?';
+  
+  db.query(sql, [quizId])
+    .then(([result]) => {
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Quiz not found' });
+      }
+      res.status(200).json({ message: 'Quiz deleted successfully' });
+    })
+    .catch(err => {
+      console.error('Error deleting quiz:', err);
+      res.status(500).json({ error: 'Failed to delete quiz' });
+    });
+};
 
 module.exports = {
-  addQuiz,
   getAllQuizzes,
   getQuizById,
-  deleteQuiz,
+  createQuiz,
+  deleteQuiz
 };

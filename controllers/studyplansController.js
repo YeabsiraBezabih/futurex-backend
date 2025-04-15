@@ -1,106 +1,137 @@
 const db = require('../database/db');
 
-const getStudyPlans = (req, res) => {
-  const userId = req.user.id;
-  const sql = 'SELECT * FROM study_plans WHERE user_id = ?';
-
-  db.query(sql, [userId], (err, results) => {
-    if (err) {
-      console.error('Error getting study plans:', err);
-      return res.status(500).json({ error: 'Failed to retrieve study plans' });
-    }
-
-    // Parse tasks from JSON strings
-    const studyPlans = results.map(plan => ({
-      ...plan,
-      tasks: JSON.parse(plan.tasks)
-    }));
-
-    res.status(200).json(studyPlans);
-  });
-};
-
-const createStudyPlan = (req, res) => {
-  const userId = req.user.id;
-  const { title, description, start_date, end_date, tasks } = req.body;
-
-  if (!title || !description || !start_date || !end_date || !tasks) {
-    return res.status(400).json({ error: 'Missing required fields' });
+const getStudyPlans = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const query = `
+      SELECT sp.*, 
+             COALESCE(SUM(ss.duration), 0) as total_study_time
+      FROM StudyPlans sp
+      LEFT JOIN StudySessions ss ON sp.id = ss.study_plan_id
+      WHERE sp.user_id = $1
+      GROUP BY sp.id
+      ORDER BY sp.created_at DESC
+    `;
+    const result = await db.query(query, [userId]);
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Error getting study plans:', err);
+    res.status(500).json({ error: 'Failed to retrieve study plans' });
   }
-
-  const sql = 'INSERT INTO study_plans (user_id, title, description, start_date, end_date, tasks) VALUES (?, ?, ?, ?, ?, ?)';
-
-  db.query(sql, [userId, title, description, start_date, end_date, JSON.stringify(tasks)], (err, result) => {
-    if (err) {
-      console.error('Error creating study plan:', err);
-      return res.status(500).json({ error: 'Failed to create study plan' });
-    }
-    const newStudyPlanId = result.insertId;
-    res.status(201).json({ id: newStudyPlanId, message: 'Study plan created successfully' });
-  });
 };
 
-const getStudyPlanById = (req, res) => {
-  const { id } = req.params;
-  const userId = req.user.id;
+const createStudyPlan = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { 
+      title, 
+      description, 
+      start_date, 
+      end_date, 
+      focus_duration = 1500,  // 25 minutes default
+      break_duration = 300    // 5 minutes default
+    } = req.body;
 
-  const sql = 'SELECT * FROM study_plans WHERE id = ? AND user_id = ?';
-
-  db.query(sql, [id, userId], (err, results) => {
-    if (err) {
-      console.error('Error getting study plan:', err);
-      return res.status(500).json({ error: 'Failed to retrieve study plan' });
+    if (!title || !description) {
+      return res.status(400).json({ error: 'Title and description are required' });
     }
-    if (results.length === 0) {
+
+    const query = `
+      INSERT INTO StudyPlans (
+        user_id, title, description, start_date, end_date, 
+        focus_duration, break_duration
+      ) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7) 
+      RETURNING *
+    `;
+    
+    const result = await db.query(query, [
+      userId, title, description, start_date, end_date,
+      focus_duration, break_duration
+    ]);
+    
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error creating study plan:', err);
+    res.status(500).json({ error: 'Failed to create study plan' });
+  }
+};
+
+const updateStudySession = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+    const { completed_duration, session_type } = req.body;
+
+    const updateQuery = `
+      UPDATE StudyPlans 
+      SET 
+        sessions_completed = sessions_completed + 1,
+        total_focus_time = total_focus_time + $1
+      WHERE id = $2 AND user_id = $3 
+      RETURNING *
+    `;
+    
+    const result = await db.query(updateQuery, [completed_duration, id, userId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Study plan not found or not authorized' });
+    }
+
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating study session:', err);
+    res.status(500).json({ error: 'Failed to update study session' });
+  }
+};
+
+const getStudyPlanById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+
+    const query = `
+      SELECT sp.*, 
+             COALESCE(SUM(ss.duration), 0) as total_study_time
+      FROM StudyPlans sp
+      LEFT JOIN StudySessions ss ON sp.id = ss.study_plan_id
+      WHERE sp.id = $1 AND sp.user_id = $2
+      GROUP BY sp.id
+    `;
+    const result = await db.query(query, [id, userId]);
+    
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Study plan not found' });
     }
-    const studyPlan = results[0];
-    studyPlan.tasks = JSON.parse(studyPlan.tasks);
-    res.status(200).json(studyPlan);
-  });
-};
-
-const updateStudyPlan = (req, res) => {
-  const { id } = req.params;
-  const userId = req.user.id;
-  const { title, description, start_date, end_date, tasks } = req.body;
-
-  if (!title || !description || !start_date || !end_date || !tasks) {
-    return res.status(400).json({ error: 'Missing required fields' });
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error getting study plan:', err);
+    res.status(500).json({ error: 'Failed to retrieve study plan' });
   }
-
-  const sql = 'UPDATE study_plans SET title = ?, description = ?, start_date = ?, end_date = ?, tasks = ? WHERE id = ? AND user_id = ?';
-
-  db.query(sql, [title, description, start_date, end_date, JSON.stringify(tasks), id, userId], (err, result) => {
-    if (err) {
-      console.error('Error updating study plan:', err);
-      return res.status(500).json({ error: 'Failed to update study plan' });
-    }   if (result.affectedRows === 0) {   return res.status(404).json({ error: 'Study plan not found or not authorized to update' });
-    }
-    res.status(200).json({ message: 'Study plan updated successfully' });
-  });
 };
 
-const deleteStudyPlan = (req, res) => {
-  const { id } = req.params;
-  const userId = req.user.id;
+const deleteStudyPlan = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
 
-  const sql = 'DELETE FROM study_plans WHERE id = ? AND user_id = ?';
-
-  db.query(sql, [id, userId], (err, result) => {
-    if (err) {
-      console.error('Error deleting study plan:', err);
-      return res.status(500).json({ error: 'Failed to delete study plan' });
+    const query = 'DELETE FROM StudyPlans WHERE id = $1 AND user_id = $2 RETURNING *';
+    const result = await db.query(query, [id, userId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Study plan not found or not authorized to delete' });
     }
-    if (result.affectedRows === 0) {    return res.status(404).json({ error: 'Study plan not found or not authorized to delete' });  }
     res.status(200).json({ message: 'Study plan deleted successfully' });
-  });
+  } catch (err) {
+    console.error('Error deleting study plan:', err);
+    res.status(500).json({ error: 'Failed to delete study plan' });
+  }
 };
 
 module.exports = {
     getStudyPlans,
     createStudyPlan,
     getStudyPlanById,
-    updateStudyPlan,
+    updateStudySession,
     deleteStudyPlan
 };

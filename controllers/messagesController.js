@@ -54,19 +54,47 @@ const deleteMessage = (req, res) => {
 };
 
 const getMessagesBetweenUsers = (req, res) => {
-  const { userId1, userId2 } = req.params;
+  const { user_id1, user_id2 } = req.params;
   const sql = `
-    SELECT * FROM messages
+    SELECT * FROM Messages
     WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
-    ORDER BY timestamp ASC
+    ORDER BY created_at ASC
   `;
-  db.query(sql, [userId1, userId2, userId2, userId1], (err, results) => {
-    if (err) {
+  
+  db.query(sql, [user_id1, user_id2, user_id2, user_id1])
+    .then(([results]) => {
+      res.status(200).json(results);
+    })
+    .catch(err => {
       console.error('Error fetching messages between users:', err);
-      return res.status(500).json({ error: 'Failed to fetch messages between users' });
-    }
-    res.status(200).json(results);
-  });
+      res.status(500).json({ error: 'Failed to fetch messages between users' });
+    });
+};
+
+const createMessage = (req, res) => {
+  const senderId = req.user.userId;
+  const { receiver_id, content } = req.body;
+
+  if (!receiver_id || !content) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const sql = 'INSERT INTO Messages (sender_id, receiver_id, content) VALUES (?, ?, ?)';
+  
+  db.query(sql, [senderId, receiver_id, content])
+    .then(([result]) => {
+      res.status(201).json({
+        id: result.insertId,
+        sender_id: senderId,
+        receiver_id,
+        content,
+        message: 'Message sent successfully'
+      });
+    })
+    .catch(err => {
+      console.error('Error creating message:', err);
+      res.status(500).json({ error: 'Failed to send message' });
+    });
 };
 
 module.exports = {
@@ -74,5 +102,6 @@ module.exports = {
   getAllMessages,
   getMessageById,
   deleteMessage,
-  getMessagesBetweenUsers
+  getMessagesBetweenUsers,
+  createMessage
 };

@@ -68,7 +68,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *       500:
  *         description: Internal Server Error
  */
-router.get('/:user_id1/:user_id2', authMiddleware.authenticateToken, messagesController.getMessages);
+router.get('/:user_id1/:user_id2', authMiddleware, messagesController.getMessagesBetweenUsers);
 
 /**
  * @swagger
@@ -92,6 +92,6 @@ router.get('/:user_id1/:user_id2', authMiddleware.authenticateToken, messagesCon
  *       500:
  *         description: Internal Server Error
  */
-router.post('/', authMiddleware.authenticateToken, messagesController.createMessage);
+router.post('/', authMiddleware, messagesController.createMessage);
 
 module.exports = router;

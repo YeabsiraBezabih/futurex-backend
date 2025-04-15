@@ -62,8 +62,7 @@ router.get('/', languageController.getAllLanguages);
  *             schema:
  *               $ref: '#/components/schemas/Language'
  *       404:
- *         description: The language was not found
- */
+ *         description: The language was not found\n */
 router.get('/:id', languageController.getLanguageById);
 
 /**

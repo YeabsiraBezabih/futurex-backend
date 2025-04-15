@@ -1,50 +1,95 @@
 const express = require('express');
 const router = express.Router();
-const messagesController = require('../controllers/messagesController');
+const notificationsController = require('../controllers/notificationsController');
+const authMiddleware = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
- * tags:
- *   name: Messages
- *   description: API for managing messages
+ * components:
+ *   schemas:
+ *     Notification:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         user_id:
+ *           type: integer
+ *         title:
+ *           type: string
+ *         message:
+ *           type: string
+ *         type:
+ *           type: string
+ *           enum: [info, success, warning, error]
+ *         is_read:
+ *           type: boolean
+ *         created_at:
+ *           type: string
+ *           format: date-time
  */
 
 /**
  * @swagger
- * /api/messages/{senderId}/{receiverId}:
+ * /api/notifications:
  *   get:
- *     summary: Get messages between two users
- *     tags: [Messages]
- *     parameters:
- *       - in: path
- *         name: senderId
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID of the sender
- *       - in: path
- *         name: receiverId
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID of the receiver
+ *     summary: Get all notifications for the authenticated user
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Messages retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   content:
- *                     type: string
- *                   sender_id:
- *                     type: integer
- *                   receiver_id:
- *                     type: integer
+ *         description: List of notifications
+ *       401:
+ *         description: Unauthorized
  */
-router.get('/:senderId/:receiverId', messagesController.getMessages);
+router.get('/', authMiddleware, notificationsController.getUserNotifications);
+
+/**
+ * @swagger
+ * /api/notifications/{id}:
+ *   put:
+ *     summary: Mark a notification as read
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Notification marked as read
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Notification not found
+ */
+router.put('/:id', authMiddleware, notificationsController.markAsRead);
+
+/**
+ * @swagger
+ * /api/notifications/{id}:
+ *   delete:
+ *     summary: Delete a notification
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Notification deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Notification not found
+ */
+router.delete('/:id', authMiddleware, notificationsController.deleteNotification);
 
 module.exports = router;
