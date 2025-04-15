@@ -64,7 +64,7 @@ router.get('/', languageController.getAllLanguages);
  *       404:
  *         description: The language was not found
  */
-router.get('/:id', languageController.getLanguage);
+router.get('/:id', languageController.getLanguageById);
 
 /**
  * @swagger
