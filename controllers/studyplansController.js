@@ -75,9 +75,7 @@ const updateStudyPlan = (req, res) => {
     if (err) {
       console.error('Error updating study plan:', err);
       return res.status(500).json({ error: 'Failed to update study plan' });
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Study plan not found or not authorized to update' });
+    }   if (result.affectedRows === 0) {   return res.status(404).json({ error: 'Study plan not found or not authorized to update' });
     }
     res.status(200).json({ message: 'Study plan updated successfully' });
   });
@@ -94,9 +92,7 @@ const deleteStudyPlan = (req, res) => {
       console.error('Error deleting study plan:', err);
       return res.status(500).json({ error: 'Failed to delete study plan' });
     }
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Study plan not found or not authorized to delete' });
-    }
+    if (result.affectedRows === 0) {    return res.status(404).json({ error: 'Study plan not found or not authorized to delete' });  }
     res.status(200).json({ message: 'Study plan deleted successfully' });
   });
 };

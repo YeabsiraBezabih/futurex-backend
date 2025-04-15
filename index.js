@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
-const hobbiesRoutes = require('./routes/hobbies');
+require('dotenv').config();
 const languagesRoutes = require('./routes/languages');
 const messagesRoutes = require('./routes/messages');
 const notificationsRoutes = require('./routes/notifications');
@@ -99,7 +99,6 @@ app.get('/', (req, res) => {
  */
 
 app.use('/api/auth', authRoutes);
-app.use('/api/hobbies', hobbiesRoutes);
 app.use('/api/languages', languagesRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/notifications', notificationsRoutes);

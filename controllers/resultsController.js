@@ -85,23 +85,9 @@ const deleteResult = (req, res) => {
   });
 };
 
-const getResultsByUserId = (req, res) => {
-  const { userId } = req.params;
-  const sql = 'SELECT * FROM results WHERE user_id = ?';
-  db.query(sql, [userId], (err, results) => {
-    if (err) {
-      console.error('Error fetching results for user:', err);
-      return res.status(500).json({ error: 'Failed to fetch results for user' });
-    }
-    res.status(200).json(results);
-  });
-};
-
 module.exports = {
   createResult,
   getResults,
-  getResultById,
   updateResult,
   deleteResult,
-  getResultsByUserId,
 };

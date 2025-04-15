@@ -82,26 +82,11 @@ const getQuizById = (req, res) => {
     });
 };
 
-const deleteQuiz = (req, res) => {
-    const quizId = req.params.id;
 
-    // First, delete questions associated with the quiz
-    db.query('DELETE FROM questions WHERE quiz_id = ?', [quizId], (err, result) => {
-        if (err) {
-            console.error('Error deleting questions:', err);
-            return res.status(500).json({ error: 'Failed to delete questions' });
-        }
 
-        // Then, delete the quiz itself
-        db.query('DELETE FROM quizzes WHERE id = ?', [quizId], (err, result) => {
-            if (err) {
-                console.error('Error deleting quiz:', err);
-                return res.status(500).json({ error: 'Failed to delete quiz' });
-            }
-            res.status(200).json({ message: 'Quiz deleted successfully' });
-        });
-    });
-};
+
+
+
 
 module.exports = {
   addQuiz,

@@ -46,7 +46,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *       500:
  *         description: Internal Server Error
  */
-router.get('/:user_id', studyplansController.getStudyPlans);
+router.get('/:user_id',authMiddleware, studyplansController.getStudyPlans);
 
 /**
  * @swagger

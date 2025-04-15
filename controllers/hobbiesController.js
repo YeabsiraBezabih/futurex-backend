@@ -26,10 +26,12 @@ const getHobby = (req, res) => {
     });
 };
 
-const createHobby = (req, res) => {
-    const { name, description, category, image_url } = req.body;
 
-    if (!name || !description || !category || !image_url) {
+const createHobby = (req, res) => {
+    const { name, description, image_url } = req.body;
+    const category = "general"; 
+
+    if (!name || !description  || !image_url) {
         return res.status(400).json({ error: "All fields are required" });
     }
 
@@ -43,11 +45,13 @@ const createHobby = (req, res) => {
     });
 };
 
+
 const updateHobby = (req, res) => {
     const hobbieId = req.params.id;
-    const { name, description, category, image_url } = req.body;
+    const { name, description, image_url } = req.body;
+    const category = "general"
 
-    if (!name || !description || !category || !image_url) {
+    if (!name || !description  || !image_url) {
         return res.status(400).json({ error: "All fields are required" });
     }
 

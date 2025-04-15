@@ -82,24 +82,9 @@ const deleteNotification = (req, res) => {
     });
 };
 
-const getNotificationsByUserId = (req, res) => {
-    const userId = req.params.userId;
-
-    const sql = 'SELECT * FROM Notifications WHERE user_id = ?';
-
-    db.query(sql, [userId], (err, results) => {
-        if (err) {
-            console.error("Error fetching notifications:", err);
-            return res.status(500).json({ message: 'Failed to retrieve notifications', error: err.message });
-        }
-        res.status(200).json(results);
-    });
-};
-
 module.exports = {
     addNotification,
     getAllNotifications,
     getNotificationById,
     deleteNotification,
-    getNotificationsByUserId
 };

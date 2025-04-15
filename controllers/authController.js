@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const db = require('../database/db');
 
 const register = (req, res) => {
@@ -24,7 +25,7 @@ const register = (req, res) => {
                     return res.status(500).json({ message: 'Error registering user', error: err });
                 }
                 const userId = results.insertId;
-                const token = jwt.sign({ userId: userId, username: username }, 'your_jwt_secret', { expiresIn: '1h' });
+                const token = jwt.sign({ userId: userId, username: username }, process.env.JWT_SECRET, { expiresIn: '1h' });
                 res.status(201).json({ message: 'User registered successfully', userId: userId, token: token });
             });
         });
@@ -52,7 +53,7 @@ const login = (req, res) => {
             if (!isMatch) {
                 return res.status(401).json({ message: 'Invalid username or password' });
             }
-            const token = jwt.sign({ userId: user.id, username: user.username }, 'your_jwt_secret', { expiresIn: '1h' });
+            const token = jwt.sign({ userId: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
             res.status(200).json({ message: 'Login successful', token: token, userId: user.id });
         });
     });
@@ -60,7 +61,7 @@ const login = (req, res) => {
 
 const profile = (req, res) => {
     const userId = req.user.userId;
-    const query = 'SELECT id, username, email, bio, profile_picture FROM Users WHERE id = ?';
+    const query = 'SELECT id, username, email FROM Users WHERE id = ?';
     db.query(query, [userId], (err, results) => {
         if (err) {
             return res.status(500).json({ message: 'Error retrieving profile', error: err });
@@ -73,14 +74,12 @@ const profile = (req, res) => {
 };
 const updateProfile = (req, res) => {
     const userId = req.user.userId;
-    const { username, email, bio, profile_picture } = req.body;
+    const { username, email } = req.body;
 
-    //check if all required fields are present
     if (!username || !email) {
         return res.status(400).json({ message: 'Username and email are required' });
     }
 
-    //check if the username or email already exists for another user
     const checkUserQuery = 'SELECT * FROM Users WHERE (username = ? OR email = ?) AND id != ?';
     db.query(checkUserQuery, [username, email, userId], (err, results) => {
         if (err) {
@@ -92,8 +91,7 @@ const updateProfile = (req, res) => {
         let updateFields = {};
         if (username) updateFields.username = username;
         if (email) updateFields.email = email;
-        if (bio) updateFields.bio = bio;
-        if (profile_picture) updateFields.profile_picture = profile_picture;
+        
 
         let updateQuery = 'UPDATE Users SET ';
         const values = [];
@@ -117,46 +115,6 @@ const updateProfile = (req, res) => {
     });
 };
 
-/**
- * @swagger
- * tags:
- *   name: Auth
- *   description: User authentication
- */
-
-/**
- * @swagger
- * /api/auth/register:
- *   post:
- *     summary: Register a new user
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username:
- *                 type: string
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *             example:
- *               username: newuser
- *               email: newuser@example.com
- *               password: password123
- *     responses:
- *       201:
- *         description: User registered successfully
- *       400:
- *         description: All fields are required
- *       409:
- *         description: Username or email already exists
- *       500:
- *         description: Error registering user
- */
 module.exports = {
     register,
     login,

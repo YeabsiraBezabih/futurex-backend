@@ -5,10 +5,10 @@ const addMessage = (req, res) => {
   const sql = 'INSERT INTO messages (sender_id, receiver_id, content, timestamp) VALUES (?, ?, ?, ?)';
   db.query(sql, [senderId, receiverId, content, timestamp], (err, result) => {
     if (err) {
-      console.error("Error adding message:", err);
+      console.error('Error adding message:', err);
       return res.status(500).json({ error: 'Failed to add message' });
     }
-    res.status(201).json({ id: result.insertId, senderId, receiverId, content, timestamp });
+    res.status(201).json({ id: result.insertId, senderId, receiverId, content, timestamp, message: 'Message added successfully' });
   });
 };
 
@@ -16,7 +16,7 @@ const getAllMessages = (req, res) => {
   const sql = 'SELECT * FROM messages';
   db.query(sql, (err, results) => {
     if (err) {
-      console.error("Error fetching messages:", err);
+      console.error('Error fetching messages:', err);
       return res.status(500).json({ error: 'Failed to fetch messages' });
     }
     res.status(200).json(results);
@@ -28,7 +28,7 @@ const getMessageById = (req, res) => {
   const sql = 'SELECT * FROM messages WHERE id = ?';
   db.query(sql, [id], (err, results) => {
     if (err) {
-      console.error("Error fetching message:", err);
+      console.error('Error fetching message:', err);
       return res.status(500).json({ error: 'Failed to fetch message' });
     }
     if (results.length === 0) {
@@ -43,7 +43,7 @@ const deleteMessage = (req, res) => {
   const sql = 'DELETE FROM messages WHERE id = ?';
   db.query(sql, [id], (err, result) => {
     if (err) {
-      console.error("Error deleting message:", err);
+      console.error('Error deleting message:', err);
       return res.status(500).json({ error: 'Failed to delete message' });
     }
     if (result.affectedRows === 0) {
@@ -62,7 +62,7 @@ const getMessagesBetweenUsers = (req, res) => {
   `;
   db.query(sql, [userId1, userId2, userId2, userId1], (err, results) => {
     if (err) {
-      console.error("Error fetching messages between users:", err);
+      console.error('Error fetching messages between users:', err);
       return res.status(500).json({ error: 'Failed to fetch messages between users' });
     }
     res.status(200).json(results);
